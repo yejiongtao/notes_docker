@@ -1,0 +1,105 @@
+1. containers & Docker
+	container is to isolate a process from all resources except where explicitly allowed
+	containers vs virtualization
+		virtual machines require significant resource overhead
+			because they run a whole copy of an operating system in addition to the software you want to use
+		programs running inside Docker containers interface directly with the host's Linux kernel
+			on Windows and Mac OS, Docker uses a single, small virtual machine to run all containers
+
+	Docker doesn't provide the container technology
+		it makes it simpler to use
+
+	containers that Docker builds are isolated with respect to eight aspects
+		PID namespace	process identifiers and capabilities
+			each container has its own PID 1, 2, ...
+		UTS namespace	host and domain name
+		MNT namespace	file system access and structure
+		IPC namespace	process communication over shared memory
+		NET namespace	network access and structure
+		USR namespace	user names and identifiers
+		chroot()	controls the location of the file system root
+		cgroups		resource protection
+
+	shipping containers
+		Docker completes the traditional container metaphor by including a way to package and distribute software
+		a Docker 'image' is a bundled snapshot of all the files needed for a program to run inside a container
+			'registries' and 'indexes' are infrastructure components that simplify distributing Docker images
+	
+	what does Docker solve
+		getting organized
+		improving portability between OSs
+		protecting your computer
+		
+2. docker command line
+	install https://docs.docker.com/engine/installation
+	docker help
+
+	docker run dockerinaction/hello_world
+		dockerinaction/hello_world is the repository (image) name
+		docker run
+			checks for local image first
+			if not installed, find and download from Docker Hub
+			once installed, create a new container and run the program inside it
+			(docker run will create a new container every time)
+		note
+			the running state of a container is directly tied to the state of a single running program inside it
+				the container is stopped when the program stops
+			
+	docker run --detach --name web nginx:latest
+		--detach (-d) runs it in the backgroud
+
+	docker run --interactive --tty --link web:insideweb --name web_test busybox:latest /bin/sh
+		--interactive (-i) 
+			keeps the standard input stream (stdin) open for the container even if no terminal is attached
+		--tty (-t) 
+			allocates a virtual terminal for the container
+		-it
+			you usually use both of these when running an interactive program
+		busybox contains some commonly used linux shell command, e.g. bash shell
+		to detach the terminal
+			ctrl + p, then q
+	
+	ps exec web_test pwd
+		run additional processes in a running container
+
+	docker ps
+		list the running containers
+	docker logs id_or_name
+		anything the program writes to the stdout or stderr will be recorded in this log
+	
+	docker restart id_or_name
+	docker stop id_or_name
+
+3. container identification
+	unique id
+		even the truncated 12-char version has a high probability of uniqueness
+		to get it
+			CID=$(docker create nginx:latest)
+			echo $CID
+				'docker create' creates a container without starting it
+					will print out the id
+				running a detached container also prints out it
+			
+			docker create --cidfile /tmp/web.cid nginx
+				run --cidfile also writes cid to a file
+				will fail if the file already exists
+
+			CID=$(docker ps --latest --quiet)
+	
+	unique auto-generated human-friendly name
+		if --name is not used
+
+4. container state
+		-run-> running
+		-create-> exited
+	running
+		-pause-> paused 
+		-stop|kill-> exited
+	paused
+		-unpause-> running
+	exited
+		-start|restart-> running
+		-remove->
+	restarting
+		-stop-> exited
+		-restart-> running
