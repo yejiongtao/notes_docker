@@ -62,13 +62,23 @@
 	ps exec web_test pwd
 		run additional processes in a running container
 
+	docker pull nginx:latest
+		pull the image without creating any container with it
+
 	docker ps
 		list the running containers
 	docker logs id_or_name
 		anything the program writes to the stdout or stderr will be recorded in this log
+	docker top id_or_name
+		show processes running in the container
+	docker images
 	
 	docker restart id_or_name
 	docker stop id_or_name
+	docker rm id_or_name
+		docker run --rm hello_world
+			automatically remove the container when it exits
+	docker rmi image_name
 
 3. container identification
 	unique id

@@ -1,0 +1,99 @@
+1. environment-agnostic systems
+	Docker has three specific features to help build environment-agnostic systems
+		read-only file systems
+			--read-only
+			but sometimes the process needs some write privilege
+				e.g. creating lock files
+				use volumns to make that exception
+					-v /run/lock/apache2/
+
+		environment variable injection
+			--env ENV_1='hello'
+			-e ENV_2='hi'
+				// one -e for each variable
+
+		volumns
+
+2. auto restart
+	--restart
+		one of the following
+			never restart (default)
+			attempt to restart when a failure is detected
+			attempt for some predetermined time to restart when a failure is detected
+			always restart regardless of the condition
+
+		exponential backoff strategy
+			doesn't restart immediately
+				instead, wait some time to restart
+				doubles the previous time spent waiting on each successive attempt
+			when waiting to restart, the container is at 'restarting' state
+		
+	supervisor process (or init process)
+		a program used to launch and maintain the state of other programs
+			on Linux, PID #1 is an init process
+		use a supervisor process inside the container
+			to keep the container running when the target process fails and is restarted
+			popular supervisor programs
+				init, systemd, runit, upstart, supervisord
+		e.g.
+			/tutum/lamp uses supervisord to keep all the related processes running
+				this container provides a full LAMP stack
+
+3. images
+	identifying images
+		repository
+			a named bucket of images
+			[REGISTRY_HOST/] [USERNAME/] NAME
+				e.g. quay.io/dockerinaction/ch3_hello_registry
+				// when the host is omitted, Docker Hub is used
+		tag
+			a tag can only be applied to a single image in a repository
+			a single image can have serveral tags
+				allows repository owners to create useful versioning or feature tags
+
+	Docker Hub
+		two ways to publish images on Docker Hub
+			use docker push
+				are considered to be less trustworthy, because it's not clear how exactly they were built
+			make a Dockerfile publicly available and use Docker Hub's continuous build system
+				Dockerfiles are scripts for building images
+				images created from these automated builds are preferred
+					because the Dockerfile is available for examination
+		docker login
+			to be able to access your private repositories
+			docker logout
+
+	other ways to install software
+		use alternative repository registries or run your own registry
+			[REGISTRY_HOST/] [USERNAME/] NAME [:TAG]
+
+		manually load images from a file
+			docker save -o myfile.docker.tar busybox:latest
+				// docker save creates TAR files
+				// but you can specify any extension cuz it's Linux!
+			docker load -i myfile.docker.tar
+
+		download a project from some other source and build an image using a provided Dockerfile
+
+	image layers
+		a layer is an image that's related to at least one other image
+
+4. file system isolation
+	three tools used to accomplish this
+		union file system
+			(Docker uses a variety of union file systems and will select the best fit for your system)
+		MNT namespaces
+			a  new container will have its own MNT namespace, and a new mount point will be created for the container to the image
+		chroot
+			used to make the root of the image file system the root in the container¡¯s context
+			prevents anything running inside the container from referencing any other part of the host file system
+
+	benefits
+		common layers need to be installed only once
+		layers provide a coarse tool for managing dependencies and separating concerns
+		it's easy to create software specializations when you can layer minor changes on top of some basic image
+	
+
+	
+
+
