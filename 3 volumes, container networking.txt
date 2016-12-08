@@ -1,0 +1,98 @@
+1. volumes
+	a volume is a mount point on the container's directory tree where a portion of the host directory tree has been mounted
+		images are appropriate for packaging and distributing relatively static files like programs 
+			volumes hold dynamic data or specializations
+		this makes images reusable and data simple to share
+
+	docker inspect --format "{{json .Volumes}}" container_name
+		checkout volume list
+	
+	volume types
+		bind mount volumes
+			use any user-specified directory or file on the host OS
+			useful if you want to share data with other processes running outside a container
+				such as components of the host system itself
+			-v /path/on/host:/path/in/container
+				(you must specify locations with absolute paths)
+			-v /path/on/host:/path/in/container:ro
+				read-only
+
+			the content in /path/in/container will be replaced
+				which is the basis for the polymorphic container pattern
+
+			not limited to directories
+				you can use bind mount volumes to mount individual files
+				but if the file doesn't exist on the host
+					Docker assumes that you wanted to use a directory
+					and create it on the host, mount it in the container, even if the location is occupied by a file
+			
+			problems
+				it creates an opportunity for conflit with other containers
+				creates dependencies on the host
+
+		managed volumes
+			use locations created by the Docker in space controlled by it
+				it's a method of decoupling volumes from specialized locations on the file system
+			-v /path/in/container
+
+	sharing volumes
+		host-dependent sharing
+			when two or more containers each has a bind mount volume for the same known location on the host
+			
+		generalized sharing and the volumes-from flag
+			--volumes-from another_container
+				copies the volumes from one or more containers to the new container
+			drawbacks
+				you cannot remap the volume to a different mount point using --volumes-from
+				if the mount points of volumes confict, only one will be created
+				you cannot change the write permission of the volume if you use --volumes-from
+
+	advanced container patterns with volumes
+		why?
+			managed volumes have life cycles independent of any container
+				but you can only reference them by the containers that use them
+			docker rm -v container_name
+				removes managed volumes if no container is referencing them any more
+				(Docker doesn't clean up bind mount volumes cuz they are out of its controlled area)
+
+			so if you forget to clean volumes up
+				they stick around and it's difficult to remove them
+		
+		volume container pattern
+			creates a container that does little more than provide a handle to volumes
+				a volume container needn't to be running, because stopped containers maintain their volume references
+			e.g.
+				docker run -d -v /path/in/container --name vc_hi \
+					alphine echo I am Volume Container!
+			
+			volume containers are important for keeping a handle on data even in cases where a single container should have exclusive access to some data
+				cuz these handles make it possible to easily back up, restore and migrate data
+				(e.g. you can remove the container without losing the data)
+
+			volume containers are most useful when you control and are able to standardize on mount point naming conventions				
+
+		data-packed volume containers
+			images can be used to distribute static resources like configuration or code
+				to use, you pack the data from the image into a volume
+				then you can share it
+			e.g.
+				docker run --name config_debug -v /config \
+					image_with_statics /bin/sh -c 'cp /path/to/statics/* /config/'
+			
+		polymorphic container pattern
+			you can inject anything into a container to allow it behave differently without modifying an image
+				using with data-packed volume containers
+
+2. Docker container networking
+	single-host virtual networks
+		each container has its own virtual network interface
+			a bridge interface called 'docker0' is used to connect containers' virtual interfaces and one of the host's interface
+			docker0 is in the host's namespace
+
+		you can customize the IP address of docker0, the host interface that docker0 is connected to, and the way containers communicate with each other
+
+	multi-host networks
+		provide an overlay where any container on a participating host can have its own routable IP address
+		still in beta
+	
+

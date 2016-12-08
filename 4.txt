@@ -1,0 +1,15 @@
+1. 4 network container archetypes
+	(always use the most isolated archetype if possible)
+	closed containers
+		have access only to its loopback interface
+		--net none
+
+	bridged containers
+		default
+
+
+	joined containers
+	open containers
+
+
+
