@@ -58,8 +58,13 @@
 		busybox contains some commonly used linux shell command, e.g. bash shell
 		to detach the terminal
 			ctrl + p, then q
+
+			(but don't use --rm along with -it, otherwise when you detach, your bash becomes unresponsive. don't know why)
+			to kill a tty
+				ps -fu tau
+				kill -HUP processid
 	
-	ps exec web_test pwd
+	docker exec web_test pwd
 		run additional processes in a running container
 
 	docker pull nginx:latest

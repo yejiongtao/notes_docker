@@ -1,0 +1,137 @@
+1. 4 network container archetypes
+	(always use the most isolated archetype if possible)
+	closed containers
+		have access only to its loopback interface
+		--net none
+
+	bridged containers (default)
+		outbound traffic
+			(you have access to outside with this archetype)
+			--hostname tau
+				my own hostname, in order to decouple from a dependency on a specific host IP
+			
+			--dns 8.8.8.8
+				you can specify one or more DNS servers to use
+			
+			--dns-search test.com
+				specifies a search domain
+					e.g. 'nslookup tau' will look up tau.test.com
+				this allows you to use environment-enaware domain-names
+					e.g. use test.com for test enviroment and dev.com for dev environment as search domain,
+					then you use an identical name 'tau' in the container
+			
+			--add-host iris:192.168.3.3
+				adds a custom mapping for an IP address and a hostname
+					will override the original DNS mapping
+				can be used to block targeted hostnames by mapping to your own address like 127.0.0.1
+				can be used to route unsecure traffic to secure channels
+
+				/etc/hosts in container
+					all the custom mappings
+
+		inbound traffic
+			by default, bridged containers aren't accessible from the host network
+
+			--publish (-p)
+				creates a mapping between a port on the host and the container's interface	
+			forms
+				<containerPort>
+					binds the container port to a dynamic port on all of the host's interfaces
+				<hostPort>:<containerPort>
+					binds the specified container port to the specified port on each of the host's interfaces
+				<ip>::<containerPort>
+					binds the container port to a dynamic port on the interface with the specified IP address
+				<ip>:<hostPort>:<containerPort>
+					binds the container port to the specified port on the interface with the specified IP address
+
+			--publish-all (-P)
+				creates mappings for all ports that an image reports to expose
+				--expose <conatinerPort>
+					add another port to the image's expose list
+			
+			docker port container_name
+				list the port mappings
+
+		inter-container communication
+			all local bridged containers are on the same bridge network and can communicate with each other by default
+				you can ping any other local bridged containers, even those not exposing any port, because ping is not tcp, it requires not port
+			
+			you can disable inter-container communication when starting the Docker daemon
+				(to protect a container from other containers)
+					docker -d --icc=false ...
+				! this is an important approach!
+		
+		modifying the bridge interface (when starting the Docker daemon)
+			define the address and subnet of the bridge
+				--bip "192.168.0.128"
+
+			define the range of IP addresses that can be assigned to containers
+				--fix-cidr "192.168.0.192/26"
+
+			define the maximum transmission unit (MTU)
+				-mtu 1200
+
+	joined containers
+		share a common network stack
+			means that there's no isolation between joined containers
+		--net container:container_name_or_id
+
+		pros
+			useful when you wan to use a single loopback interface for communication between programs in different containers
+			useful if a program in one container is going to change the joined network stack, and another program is going to use that modified network
+			useful when you need to monitor the network traffic for a program in another container
+		cons
+			security concerns
+			reintroducing port conflit issues
+
+	open containers
+		have full access to the host's network
+		--net host
+
+2. links for local service discovery
+	why?
+		problems using bridge to communicate
+			the bridge network assigns IP addresses to containers dynamically at creation time, so local service discovery can seem complicated
+		one way to solve this is to use a local DNS server
+			but this will fail if arbitrary inter-container communication has been disabled
+	
+	docker run -d --name importantData --expose 3306 ...
+	docker run -d --name myApp --link importantData:db ...
+		rules
+			the target container (importantData) must be running when the new container is created
+				because containers hold their IP address only when they're running
+			the ports opened for communication are those that have been exposed by the target container
+				here, tcp://db:3306 connects to the target container
+
+		adding a link on a new container does 3 things:
+			a. environment variables describing the target container's end point will be created
+			b. the link alias will be added to the DNS override list of the new container with the IP address of the target container
+			c. if inter-container communication is disabled
+				Docker will add specific firewall rules to allow communication between linked containers
+		
+		the following environment variables will be created
+			DB_NAME=/myApp/db			// DB is the link alias
+			DB_PORT_3306_TCP_PORT=3306
+			DB_PORT_3306_TCP_ADDR=10.0.0.2		// address of the target
+			DB_PORT_3306_TCP_PROTO=tcp
+			DB_PORT_3306_TCP=tcp://10.0.0.2:3306
+
+	link is nontransitive
+
+	shortcomings
+		when a dependency is down and brought back to life
+			its IP may change, requiring restarts of the containers dependent on it
+		if you use DNS intead of links
+			DNS has time-to-live (TTL) values that might slow the propagation of IP address changes as well
+		so, if your applications are so slow to start
+			you may want to consider DNS
+			otherwise, links are good
+
+2. alpine
+	a very lightweight Linux distribution
+	docker run --rm alpine ping 8.8.8.8
+	docker run -it --rm alpine /bin/sh
+
+3. busybox
+	contains tiny versions of many common UNIX utilities into a small executable
+	docker run -it busybox

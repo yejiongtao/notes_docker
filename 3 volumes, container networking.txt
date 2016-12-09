@@ -46,6 +46,7 @@
 				you cannot remap the volume to a different mount point using --volumes-from
 				if the mount points of volumes confict, only one will be created
 				you cannot change the write permission of the volume if you use --volumes-from
+			volumes copy is transitive
 
 	advanced container patterns with volumes
 		why?
