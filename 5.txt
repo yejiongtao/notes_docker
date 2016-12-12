@@ -1,4 +1,43 @@
-1. 
+1. resource allowances, to prevent a process from overwhelming others
+	memory limits
+		--memory 256b (or -m, units can be b, k, m, g)
+		note that, memory limits are not reservations
+			there's no guarantee that the specified amount of memory will be available
+		and you may want to apply --restart logic when the process exhausts the available memory
 
+	CPU
+		--cpu-shares 512
+			512 is the relative weight
+				if you set another container to 1024, then the proportion is 1:2
+			note that, CPU shares are only enforced when there's a contention for time on the CPU
+				if other containers are idle, then the container can use more CPU share
+			by default, any container is able to use 100% of the CPU
 
+		--cpuset-cpus 0
+			can be a list or a range (0,1,2 or 0-2)
+			assign a container to a specific CPU set (here, number 0)
+				to minimize context switching by ensuring that some critical processes are never executed on the same set of CPU cores
 
+	devices
+		containers have access to some devices by default
+			and Docker creates others for each container (like virtual terminals)
+		--device /dev/video0:/dev/video0
+			grants access to the container to the webcam device at /dev/video0
+
+2. shared memory
+	IPC (inter-process communication)
+		often used when the latency associated with network or pipe-based IPC drags software performance down
+		Docker creates a unique IPC namespace for each container by default
+			preventing processes in one container from accessing the memory on the host or in other containers
+	
+	sharing IPC primitives between containers
+		docker run -d --name producer ...
+		docker run -d --name consumer --ipc container:producer
+			create a container in the same IPC namespace as another target container
+
+	using an open memory container (risky)
+		docker run --ipc host ...
+		open containers are able to communicate with each other and any other processes running on the host via IPC
+
+3. users
+	

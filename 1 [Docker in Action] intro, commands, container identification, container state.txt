@@ -83,6 +83,8 @@
 	docker rm id_or_name
 		docker run --rm hello_world
 			automatically remove the container when it exits
+	docker rm -fv id_or_name
+		-v removes volumes, -f stops the container if it's running
 	docker rmi image_name
 
 3. container identification
