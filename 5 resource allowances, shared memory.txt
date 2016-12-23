@@ -20,7 +20,7 @@
 
 	devices
 		containers have access to some devices by default
-			and Docker creates others for each container (like virtual terminals)
+			and Docker creates others for each container (such as virtual terminals)
 		--device /dev/video0:/dev/video0
 			grants access to the container to the webcam device at /dev/video0
 
@@ -40,4 +40,4 @@
 		open containers are able to communicate with each other and any other processes running on the host via IPC
 
 3. users
-	
+	Docker starts containers as the root user inside that container by default

@@ -54,12 +54,13 @@
 
 		inter-container communication
 			all local bridged containers are on the same bridge network and can communicate with each other by default
-				you can ping any other local bridged containers, even those not exposing any port, because ping is not tcp, it requires not port
 			
 			you can disable inter-container communication when starting the Docker daemon
 				(to protect a container from other containers)
 					docker -d --icc=false ...
-				! this is an important approach!
+				! this is an important security approach
+					usually we disable inter-container communications 
+					and use exposes and links to allow specific inter-container communication
 		
 		modifying the bridge interface (when starting the Docker daemon)
 			define the address and subnet of the bridge
@@ -77,7 +78,7 @@
 		--net container:container_name_or_id
 
 		pros
-			useful when you wan to use a single loopback interface for communication between programs in different containers
+			useful when you want to use a single loopback interface for communication between programs in different containers
 			useful if a program in one container is going to change the joined network stack, and another program is going to use that modified network
 			useful when you need to monitor the network traffic for a program in another container
 		cons
@@ -121,7 +122,7 @@
 	shortcomings
 		when a dependency is down and brought back to life
 			its IP may change, requiring restarts of the containers dependent on it
-		if you use DNS intead of links
+		but if you use DNS intead of links
 			DNS has time-to-live (TTL) values that might slow the propagation of IP address changes as well
 		so, if your applications are so slow to start
 			you may want to consider DNS

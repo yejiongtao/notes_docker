@@ -85,7 +85,7 @@
 		MNT namespaces
 			a  new container will have its own MNT namespace, and a new mount point will be created for the container to the image
 		chroot
-			used to make the root of the image file system the root in the container°Øs context
+			used to make the root of the image file system the root in the container’s context
 			prevents anything running inside the container from referencing any other part of the host file system
 
 	benefits
